@@ -1,0 +1,87 @@
+blueprint:
+  name: Camera Telegram Notifications
+  description: Send telegram notifications when person is detected and the alarm is active
+  domain: automation
+  input:
+    person_detection_sensor:
+      name: Person Detection Sensor
+      description: This is the binary sensor which is used to detect people
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+            - device_class: motion
+    alarm_disarmed:
+      name: Alarm Disarmed Sensor
+      description: Binary sensor which provides alarm disarmed state
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+    camera_name:
+      name: Nome della telecamera
+      description: "Sting to be used in the Telegram notifications"
+      default: ""
+trigger:
+  - platform: state
+    entity_id:
+      - !input person_detection_sensor
+    not_from: "on"
+    to: "on"
+condition:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: !input alarm_disarmed
+        state: "on"
+action:
+  - variables:
+      camera_name: !input camera_name
+      camera_slug: "{{ camera_name | slugify(separator='_') }}"
+      camera_device_id: "{{ device_id(trigger.entity_id) }}"
+      message: "Rilevata persona: {{ camera_name }}"
+      snapshot_filename:
+        /config/www/tmp/{{ camera_slug }}/snapshots/snapshot-{{ now().timestamp()
+        }}.jpg
+      video_filename:
+        /config/www/tmp/{{ camera_slug }}/recordings/recording-{{ now().timestamp()
+        }}.jpg
+  - metadata: {}
+    data:
+      filename: "{{ snapshot_filename }}"
+    target:
+      device_id: "{{ camera_device_id }}"
+    action: camera.snapshot
+  - data:
+      message: "{{ message }}"
+      data:
+        photo:
+          - file: "{{ snapshot_filename }}"
+            caption: "{{ message }}"
+    action: notify.home_50019_alerts
+  - metadata: {}
+    data:
+      lookback: 0
+      duration: 15
+      filename: "{{ video_filename }}"
+    target:
+      device_id: "{{ camera_device_id }}"
+    action: camera.record
+  - data:
+      message: "{{ message }} (video)"
+      data:
+        video:
+          - file: "{{ video_filename }}"
+            caption: "{{ message }} (video)"
+    action: notify.home_50019_alerts
+  - wait_for_trigger:
+      - platform: state
+        entity_id:
+          - !input person_detection_sensor
+        to: "off"
+    timeout:
+      hours: 0
+      minutes: 1
+      seconds: 0
+      milliseconds: 0
+mode: single
