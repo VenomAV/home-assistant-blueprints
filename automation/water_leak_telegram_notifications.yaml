@@ -1,0 +1,24 @@
+blueprint:
+  name: Water leak sensor Telegram Notifications
+  description: Send telegram notifications when a water leak is detected
+  domain: automation
+  input:
+    water_leak_sensor:
+      name: Water Leak Sensor
+      description: This is the binary sensor which is used to detect water leaks
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+            - device_class: moisture
+trigger:
+  - platform: state
+    entity_id:
+      - !input water_leak_sensor
+    not_from: "on"
+    to: "on"
+action:
+  - data:
+      message: "💦💦 Perdita d'acqua in {{ area_name(trigger.entity_id) }} 🚨"
+    action: notify.home_50019_alerts
+mode: single
