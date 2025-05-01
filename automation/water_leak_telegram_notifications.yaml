@@ -1,5 +1,5 @@
 blueprint:
-  name: Water leak sensor Telegram Notifications
+  name: Water leak Telegram Notifications
   description: Send telegram notifications when a water leak is detected
   domain: automation
   input:
