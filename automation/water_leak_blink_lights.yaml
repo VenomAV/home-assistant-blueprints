@@ -1,0 +1,64 @@
+blueprint:
+  name: Water leak blinking lights
+  description: Blink lights when a water leak is detected
+  domain: automation
+  input:
+    water_leak_sensor:
+      name: Water Leak Sensor
+      description: This is the binary sensor which is used to detect water leaks
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+            - device_class: moisture
+    lights:
+      name: Lights
+      description: Lights to blink when a water leak is detected
+      selector:
+        entity:
+          filter:
+            - domain: switch
+          multiple: true
+
+triggers:
+  - trigger: state
+    entity_id:
+      - !input water_leak_sensor
+    from: "off"
+    to: "on"
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
+conditions: []
+actions:
+  - variables:
+      area_name: "{{ area_name(trigger.entity_id) | slugify(separator='_') }}"
+      scene_id: "before_blinking_lights_on_water_leak_{{ area_name }}"
+  - action: scene.create
+    metadata: {}
+    data:
+      scene_id: "{{ scene_id }}"
+      snapshot_entities: !input lights
+  - repeat:
+      sequence:
+        - action: switch.toggle
+          metadata: {}
+          data: {}
+          target:
+            entity_id: !input lights
+        - delay:
+            hours: 0
+            minutes: 0
+            seconds: 2
+            milliseconds: 0
+      while:
+        - condition: state
+          entity_id: !input water_leak_sensor
+          state: "on"
+  - action: scene.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: "scene.{{ scene_id }}"
+mode: single
