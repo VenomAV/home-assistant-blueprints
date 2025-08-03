@@ -17,22 +17,36 @@ blueprint:
         entity:
           filter:
             - domain: schedule
+    seasonal_control:
+      name: Seasonal Control (Optional)
+      description: Optional input_boolean to enable/disable the automation seasonally. Leave empty to always run.
+      default: ""
+      selector:
+        entity:
+          filter:
+            - domain: input_boolean
 
 triggers:
   - trigger: state
     entity_id: !input schedule_entity
 conditions: []
+variables:
+  seasonal_control: !input seasonal_control
 actions:
   - if:
-      - condition: state
-        entity_id: !input schedule_entity
-        state: "on"
+      - condition: template
+        value_template: "{{ seasonal_control == '' or states(seasonal_control) == 'on' }}"
     then:
-      - action: switch.turn_on
-        target:
-          entity_id: !input target_switch
-    else:
-      - action: switch.turn_off
-        target:
-          entity_id: !input target_switch
+      - if:
+          - condition: state
+            entity_id: !input schedule_entity
+            state: "on"
+        then:
+          - action: switch.turn_on
+            target:
+              entity_id: !input target_switch
+        else:
+          - action: switch.turn_off
+            target:
+              entity_id: !input target_switch
 mode: single
