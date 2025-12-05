@@ -11,6 +11,17 @@ blueprint:
           filter:
             - domain: binary_sensor
             - device_class: moisture
+    telegram_bot:
+      name: Telegram Bot
+      description: "Telegram Bot to be used to send the notifications"
+      selector:
+        config_entry:
+          integration: telegram_bot
+    telegram_bot_target:
+      name: Telegram Bot Target
+      description: "The target channel id the bot will send the notification to"
+      selector:
+        text: 
 trigger:
   - platform: state
     entity_id:
@@ -18,7 +29,11 @@ trigger:
     not_from: "on"
     to: "on"
 action:
-  - data:
+  - action: telegram_bot.send_message
+    metadata: {}
+    data:
       message: "💦💦 Perdita d'acqua in {{ area_name(trigger.entity_id) }} 🚨"
-    action: notify.home_50019_alerts
+      config_entry_id: !input telegram_bot
+      target:
+        - !input telegram_bot_target
 mode: single
