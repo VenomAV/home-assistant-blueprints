@@ -19,9 +19,20 @@ blueprint:
           filter:
             - domain: binary_sensor
     camera_name:
-      name: Nome della telecamera
+      name: Camera name
       description: "Sting to be used in the Telegram notifications"
       default: ""
+    telegram_bot:
+      name: Telegram Bot
+      description: "Telegram Bot to be used to send the notifications"
+      selector:
+        config_entry:
+          integration: telegram_bot
+    telegram_bot_target:
+      name: Telegram Bot Target
+      description: "The target channel id the bot will send the notification to"
+      selector:
+        text: 
 trigger:
   - platform: state
     entity_id:
@@ -52,13 +63,15 @@ action:
     target:
       device_id: "{{ camera_device_id }}"
     action: camera.snapshot
-  - data:
-      message: "{{ message }}"
-      data:
-        photo:
-          - file: "{{ snapshot_filename }}"
-            caption: "{{ message }}"
-    action: notify.home_50019_alerts
+  - action: telegram_bot.send_photo
+    metadata: {}
+    data:
+      verify_ssl: true
+      file: "{{ snapshot_filename }}"
+      caption: "{{ message }}"
+      config_entry_id: !input telegram_bot
+      target:
+        - !input telegram_bot_target
   - metadata: {}
     data:
       lookback: 0
@@ -67,13 +80,15 @@ action:
     target:
       device_id: "{{ camera_device_id }}"
     action: camera.record
-  - data:
-      message: "{{ message }} (video)"
-      data:
-        video:
-          - file: "{{ video_filename }}"
-            caption: "{{ message }} (video)"
-    action: notify.home_50019_alerts
+  - action: telegram_bot.send_video
+    metadata: {}
+    data:
+      verify_ssl: true
+      config_entry_id: !input telegram_bot
+      file: "{{ video_filename }}"
+      caption: "{{ message }} (video)"
+      target:
+        - !input telegram_bot_target
   - wait_for_trigger:
       - platform: state
         entity_id:
