@@ -32,7 +32,7 @@ blueprint:
       name: Telegram Bot Target
       description: "The target channel id the bot will send the notification to"
       selector:
-        text: 
+        text:
 trigger:
   - platform: state
     entity_id:
@@ -70,7 +70,7 @@ action:
       file: "{{ snapshot_filename }}"
       caption: "{{ message }}"
       config_entry_id: !input telegram_bot
-      target:
+      chat_id:
         - !input telegram_bot_target
   - metadata: {}
     data:
@@ -87,7 +87,7 @@ action:
       config_entry_id: !input telegram_bot
       file: "{{ video_filename }}"
       caption: "{{ message }} (video)"
-      target:
+      chat_id:
         - !input telegram_bot_target
   - wait_for_trigger:
       - platform: state

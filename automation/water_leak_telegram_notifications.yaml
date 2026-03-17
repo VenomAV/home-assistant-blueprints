@@ -34,6 +34,6 @@ action:
     data:
       message: "💦💦 Perdita d'acqua in {{ area_name(trigger.entity_id) }} 🚨"
       config_entry_id: !input telegram_bot
-      target:
+      chat_id:
         - !input telegram_bot_target
 mode: single
